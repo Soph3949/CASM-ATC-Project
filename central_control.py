@@ -5,8 +5,8 @@ try:
     import cflib.crtp  # type: ignore
     from cflib.swarm import Swarm  # type: ignore
     from cflib.positioning.motion_commander import MotionCommander  # type: ignore
-except ImportError as e:
-    print(f"Error: cflib not installed. Please install it with: pip install cflib")
+except ImportError:
+    print("Error: cflib not installed. Please install it with: pip install cflib")
     raise
 
 drone_1_uri = "radio://0/80/2M/E7E7E7E701"
