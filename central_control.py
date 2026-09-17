@@ -1,14 +1,15 @@
 import logging
 import time
-import cflib.crtp
-from cflib.crazyflie.swarm import Swarm
-from cflib.positioning.motion_commander import MotionCommander
+import cflib  # type: ignore
+import cflib.crtp  # type: ignore
+from cflib.swarm import Swarm  # type: ignore
+from cflib.positioning.motion_commander import MotionCommander  # type: ignore
 
 drone_1_uri = "radio://0/80/2M/E7E7E7E701"
 drone_2_uri = "radio://0/80/2M/E7E7E7E702"
 safety_radius = 0.40
-low_altitute_layer = 0.60
-high_altitute_layer = 0.90
+low_altitude_layer = 0.60
+high_altitude_layer = 0.90
 live_airspace_registry = {}
 
 uris = [drone_1_uri, drone_2_uri]
@@ -17,7 +18,7 @@ def run_central_control_tasks(scf):
     cf = scf.cf
     print(f"[{cf.link_uri}] Connected successfully! Starting test maneuver...")
     
-    with MotionCommander(scf) as mc:
+    with MotionCommander(cf) as mc:
         if cf.link_uri == drone_1_uri:
             target_altitude = low_altitude_layer
         else:
