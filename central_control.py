@@ -1,3 +1,4 @@
+"""
 import time  
 import cflib.crtp  
 from cflib.crazyflie.log import LogConfig  
@@ -84,3 +85,4 @@ if __name__ == "__main__":
         swarm.reset_estimators()  
         swarm.parallel_safe(run_central_control_tasks)  
         print("Swarm execution finished. Disconnecting all drones.")
+  """
