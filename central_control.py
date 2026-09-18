@@ -5,14 +5,14 @@ from cflib.crazyflie.syncLogger import SyncLogger
 from cflib.swarm import Swarm  
 from cflib.positioning.motion_commander import MotionCommander  
   
-drone_1_uri = "radio://0/80/2M/E7E7E7E701"  
+drone_1_uri = "radio://0/100/2M/E7E7E7E7E7"  
 drone_2_uri = "radio://0/80/2M/E7E7E7E702"  
   
 safety_radius = 0.40  
 low_altitude_layer = 0.60  
 high_altitude_layer = 0.90  
   
-uris = [drone_1_uri, drone_2_uri]  
+uris = [drone_1_uri]  
   
   
 def reset_estimator(scf):  
