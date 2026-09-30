@@ -183,22 +183,6 @@ def fly_mission(scf):
         except Exception:  
             pass  
         print(f"[{my_uri}] Safely shut down.")  
-  
-  
-if __name__ == "__main__":  
-    cflib.crtp.init_drivers()  
-    uris = [DRONE_1_URI, DRONE_2_URI]  
-  
-    with Swarm(uris, factory=CachedCfFactory if False else None) as swarm:  
-        pass  # see swarm usage below  
-  
-  
-# Note: Swarm usage — parallel_safe runs fly_mission on both drones:  
-#  
-#     with Swarm(uris) as swarm:  
-#         swarm.parallel_safe(fly_mission)  
-#  
-# parallel_safe launches one thread per drone and aborts all if one fails.
 
 if __name__ == "__main__":  
     cflib.crtp.init_drivers()  
