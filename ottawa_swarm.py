@@ -48,6 +48,8 @@ LANDMARKS = {
     "kanata":     (0.4, 1.2),   # west side  
     "nepean":     (0.4, 0.4),   # southwest corner  
     "parliament": (1.6, 1.0),   # east side (downtown)  
+    "charge_1": (0.5,0.8)       # charging station 1
+    "charge_2": (1.5,1.8)       # charging station 2
 }
   
 MISSIONS = {  
