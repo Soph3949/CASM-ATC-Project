@@ -45,10 +45,10 @@ BOUNDS = {"x": (0.2, 1.8), "y": (0.2, 1.8), "z": (0.3, 1.2)}
 # Ottawa landmarks mapped onto the grid (~real bearings: Kanata west,  
 # Nepean southwest, Parliament downtown).  
 LANDMARKS = {  
-    "kanata":     (0.3, 0.5),  
-    "nepean":     (0.4, 1.6),  
-    "parliament": (1.7, 1.0),  
-}  
+    "kanata":     (0.4, 1.2),   # west side  
+    "nepean":     (0.4, 0.4),   # southwest corner  
+    "parliament": (1.6, 1.0),   # east side (downtown)  
+}
   
 MISSIONS = {  
     DRONE_1_URI: ["kanata", "parliament"],  
