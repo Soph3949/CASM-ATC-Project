@@ -9,8 +9,6 @@ from cflib.crazyflie.syncLogger import SyncLogger
 from cflib.positioning.motion_commander import MotionCommander  
 from cflib.crazyflie.swarm import Swarm  
   
-# ---------------- Configuration ----------------  
-  
 DRONE_1_URI = "radio://0/100/2M/E7E7E7E7E7"  
 DRONE_2_URI = "radio://0/80/2M/E7E7E7E702"  
   
@@ -107,7 +105,6 @@ def other_uri(my_uri):
   
   
 def fly_mission(scf):  
-    """Autonomous waypoint mission with failsafe collision avoidance."""  
     cf = scf.cf  
     my_uri = cf.link_uri  
     peer = other_uri(my_uri)  
