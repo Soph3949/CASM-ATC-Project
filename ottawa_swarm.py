@@ -1,22 +1,3 @@
-"""  
-Verified Crazyflie two-drone collision-avoidance demo.  
-  
-Scenario: Ottawa landmarks mapped onto a bounded Lighthouse flight zone.  
-  Drone 1: Kanata -> Parliament  
-  Drone 2: Nepean -> Kanata  
-The routes cross mid-zone, so simultaneous same-speed flight creates a  
-real collision course. When horizontal separation drops below  
-SAFETY_RADIUS, drone 1 climbs and drone 2 descends; once separation  
-exceeds RESUME_RADIUS both return to cruise altitude and resume.  
-  
-Assignment rubric mapping:  
-  - Boundary mapping        -> BOUNDS (clamped setpoints)  
-  - Autonomous logic        -> waypoint mission loop  
-  - Collision avoidance     -> avoid-state if-then rules  
-  - Failsafe                -> Kalman-divergence / link-loss landing,  
-                               guaranteed land() in finally  
-"""  
-  
 import threading  
 import time  
   
