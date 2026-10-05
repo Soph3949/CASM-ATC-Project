@@ -12,17 +12,13 @@ from cflib.crazyflie.swarm import Swarm
 DRONE_1_URI = "radio://0/100/2M/E7E7E7E7E7"  
 DRONE_2_URI = "radio://0/80/2M/E7E7E7E702"  
   
-CRUISE_ALTITUDE = 0.6      # m — shared cruise height  
-SAFETY_RADIUS   = 0.40     # m — horizontal distance that triggers avoidance  
-RESUME_RADIUS   = 0.60     # m — must exceed this to resume (hysteresis)  
-DODGE_HEIGHT    = 0.30     # m — vertical offset during avoidance  
+CRUISE_ALTITUDE = 0.6
+SAFETY_RADIUS   = 0.40  
+RESUME_RADIUS   = 0.60
+DODGE_HEIGHT    = 0.30 
   
-# Physical limits of the Lighthouse-visible flight zone.  
-# Measure your real setup and adjust — all setpoints are clamped to this box.  
 BOUNDS = {"x": (0.2, 1.8), "y": (0.2, 1.8), "z": (0.3, 1.2)}  
   
-# Ottawa landmarks mapped onto the grid (~real bearings: Kanata west,  
-# Nepean southwest, Parliament downtown).  
 LANDMARKS = {  
     "kanata":     (0.4, 1.2),   # west side  
     "nepean":     (0.4, 0.4),   # southwest corner  
@@ -36,10 +32,9 @@ MISSIONS = {
     DRONE_2_URI: ["nepean", "kanata"],  
 }  
   
-VELOCITY = 0.3   # m/s — same speed for both drones  
-STEP = 0.1       # m — segment length between position checks  
-  
-# Shared position table: uri -> (x, y, z). Written by each drone's logger.  
+VELOCITY = 0.3 
+STEP = 0.1 
+   
 positions = {}  
 pos_lock = threading.Lock()  
   
@@ -49,7 +44,6 @@ def clamp(v, lo, hi):
   
   
 def make_pos_logger(scf):  
-    """Log stateEstimate x/y/z into the shared table."""  
     lg = LogConfig(name="Position", period_in_ms=100)  
     lg.add_variable("stateEstimate.x", "float")  
     lg.add_variable("stateEstimate.y", "float")  
@@ -96,7 +90,7 @@ def horizontal_distance(uri_a, uri_b):
     with pos_lock:  
         a, b = positions.get(uri_a), positions.get(uri_b)  
     if not a or not b:  
-        return float("inf")   # unknown -> treat as safe, don't dodge blindly  
+        return float("inf") 
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5  
   
   
@@ -108,7 +102,6 @@ def fly_mission(scf):
     cf = scf.cf  
     my_uri = cf.link_uri  
     peer = other_uri(my_uri)  
-    # Deterministic tie-break: drone 1 dodges UP, drone 2 dodges DOWN.  
     i_dodge_up = (my_uri == DRONE_1_URI)  
   
     reset_estimator(scf)  
