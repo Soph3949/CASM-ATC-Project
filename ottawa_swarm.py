@@ -139,8 +139,7 @@ def fly_mission(scf):
                         mc.go_to(mx, my, CRUISE_ALTITUDE)  
                         time.sleep(0.5)  
                         continue  
-  
-                    # --- IF-THEN rule 2: boundary clamp on every setpoint ---  
+
                     step = min(STEP, dist_left)  
                     nx = clamp(mx + dx / dist_left * step, *BOUNDS["x"])  
                     ny = clamp(my + dy / dist_left * step, *BOUNDS["y"])  
@@ -148,8 +147,7 @@ def fly_mission(scf):
   
             print(f"[{my_uri}] Mission complete. Landing...")  
             mc.land()  
-    finally:  
-        # --- IF-THEN rule 3: guaranteed landing on any failure/link loss ---  
+    finally:   
         pos_logger.stop()  
         try:  
             cf.commander.send_stop_setpoint()  
