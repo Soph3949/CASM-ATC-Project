@@ -11,9 +11,12 @@ cflib.crtp.init_drivers()
 
 with SyncCrazyflie(URI, cf=Crazyflie(rw_cache="./cache")) as scf:  
     with MotionCommander(scf, default_height=0.5) as mc:  
-        time.sleep(2)
-  
+        time.sleep(1)
+        
         mc.up(0.3)
+        time.sleep(1)
+
+        mc.forward(0.2)
         time.sleep(1)
 
         mc.down(0.3)
