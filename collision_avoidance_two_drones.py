@@ -9,8 +9,8 @@ from cflib.crazyflie.syncLogger import SyncLogger
 from cflib.positioning.motion_commander import MotionCommander  
 from cflib.crazyflie.swarm import Swarm  
   
-DRONE_1_URI = "radio://0/100/2M/E7E7E7E7E7"  
-DRONE_2_URI = "radio://0/80/2M/E7E7E7E702"  
+DRONE_1_URI = "radio://0/100/2M/E7E7E7E701"  
+DRONE_2_URI = "radio://0/100/2M/E7E7E7E702"  
   
 CRUISE_ALTITUDE = 0.6
 SAFETY_RADIUS   = 0.40  
