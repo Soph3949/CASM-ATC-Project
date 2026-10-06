@@ -5,7 +5,7 @@ from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie  
 from cflib.positioning.motion_commander import MotionCommander  
 
-URI = "radio://0/100/2M/E7E7E7E7E7"
+URI = "radio://0/100/2M/E7E7E7E701"
 
 cflib.crtp.init_drivers()
 available = cflib.crtp.scan_interfaces()
