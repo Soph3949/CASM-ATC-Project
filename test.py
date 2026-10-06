@@ -8,6 +8,10 @@ from cflib.positioning.motion_commander import MotionCommander
 URI = "radio://0/100/2M/E7E7E7E7E7"
 
 cflib.crtp.init_drivers()
+available = cflib.crtp.scan_interfaces()
+for i in available:
+    print "Found Crazyflie on URI [%s] with comment [%s]"
+            % (available[0], available[1])
 
 print(cflib.crtp.scan_interfaces())
 
