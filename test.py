@@ -7,21 +7,16 @@ from cflib.positioning.motion_commander import MotionCommander
 
 cflib.crtp.init_drivers()
 
-available = cflib.crtp.scan_interfaces()
-print("Found interfaces:", available)
+URI = 'radio://0/80/2M/E7E7E7E702"
 
-if available:
-    URI = available[0][0]
-    print(f"Connecting to {URI}...")
+with SyncCrazyflie(URI, cf=Crazyflie()) as scf:
+    print("Connected")
+    with MotionCommander(scf, default_height=0.3) as mc:  
+        time.sleep(1) 
+        mc.up(0.3)
+        time.sleep(1)
+        mc.forward(0.2)
+        time.sleep(1)
+        mc.down(0.3)
+        time.sleep(1)
 
-    with SyncCrazyflie(URI, cf=Crazyflie()) as scf:  
-        with MotionCommander(scf, default_height=0.5) as mc:  
-            time.sleep(1) 
-            mc.up(0.3)
-            time.sleep(1)
-            mc.forward(0.2)
-            time.sleep(1)
-            mc.down(0.3)
-            time.sleep(1)
-else:
-    print("No Crazyflie interfaces found.")
