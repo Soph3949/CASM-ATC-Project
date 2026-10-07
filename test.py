@@ -7,7 +7,7 @@ from cflib.positioning.motion_commander import MotionCommander
 
 cflib.crtp.init_drivers()
 
-URI = 'radio://0/80/2M/E7E7E7E702"
+URI = '"radio://0/80/2M/E7E7E7E702"
 
 with SyncCrazyflie(URI, cf=Crazyflie()) as scf:
     print("Connected")
