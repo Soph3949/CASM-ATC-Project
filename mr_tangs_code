@@ -1,0 +1,40 @@
+import logging
+import time
+
+import cflib.crtp
+from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+from cflib.positioning.motion_commander import MotionCommander
+
+URI = 'radio://0/80/2M/E7E7E7E702'
+
+logging.basicConfig(level=logging.ERROR)
+
+if __name__ == '__main__':
+    cflib.crtp.init_drivers(enable_debug_driver=False)
+
+    with SyncCrazyflie(URI) as scf:
+        scf.cf.platform.send_arming_request(True)
+        time.sleep(1)
+
+        with MotionCommander(scf) as mc:
+            print("Taking off...")
+            time.sleep(2)
+
+            print("Rolling right 1.0m at 0.5 m/s")
+            mc.right(1.0, velocity=0.5)
+            time.sleep(2)
+
+            print("Moving forward 1.0m at 0.5 m/s")
+            mc.forward(1.0, velocity=0.5)
+            time.sleep(2)
+
+            print("Doing a 135deg left turn")
+            mc.turn_left(135)
+            time.sleep(2)
+
+            print("Moving forward 1.41m at 0.5 m/s")
+            mc.forward(1.41, velocity=0.5)
+            time.sleep(2)
+
+            print("Landing...")
+
