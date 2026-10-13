@@ -1,69 +1,59 @@
-import logging
-import time
-
-import cflib.crtp
-from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
-from cflib.positioning.motion_commander import MotionCommander
-from cflib.utils import uri_helper
-
-URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E702')
-
-# Only output errors from the logging framework
-logging.basicConfig(level=logging.ERROR)
-
-
-if __name__ == '__main__':
-    # Initialize the low-level drivers
-    cflib.crtp.init_drivers()
-
-    with SyncCrazyflie(URI, cf=Crazyflie(rw_cache='./cache')) as scf:
-        # Arm the Crazyflie
-        scf.cf.supervisor.send_arming_request(True)
-        time.sleep(1.0)
-
-        # We take off when the commander is created
-        with MotionCommander(scf) as mc:
-            time.sleep(1)
-
-            # There is a set of functions that move a specific distance
-            # We can move in all directions
-            mc.forward(0.8)
-            mc.back(0.8)
-            time.sleep(1)
-
-            mc.up(0.5)
-            mc.down(0.5)
-            time.sleep(1)
-
-            # We can also set the velocity
-            mc.right(0.5, velocity=0.8)
-            time.sleep(1)
-            mc.left(0.5, velocity=0.4)
-            time.sleep(1)
-
-            # We can do circles or parts of circles
-            mc.circle_right(0.5, velocity=0.5, angle_degrees=180)
-
-            # Or turn
-            mc.turn_left(90)
-            time.sleep(1)
-
-            # We can move along a line in 3D space
-            mc.move_distance(-1, 0.0, 0.5, velocity=0.6)
-            time.sleep(1)
-
-            # There is also a set of functions that start a motion. The
-            # Crazyflie will keep on going until it gets a new command.
-
-            mc.start_left(velocity=0.5)
-            # The motion is started and we can do other stuff, printing for
-            # instance
-            for _ in range(5):
-                print('Doing other work')
-                time.sleep(0.2)
-
-            # And we can stop
-            mc.stop()
-
-            # We land when the MotionCommander goes out of scope
+import math, threading, time  
+import cflib.crtp  
+from cflib.crazyflie.log import LogConfig  
+from cflib.crazyflie.syncCrazyflie import SyncCrazyflie  
+from cflib.positioning.motion_commander import MotionCommander  
+  
+URI = 'radio://0/80/2M/E7E7E7E702'  
+  
+pos = [0.0, 0.0, 0.6]  
+virt = {"pos": [0.0, 0.0, 0.0], "vel": [-0.4, 0.0, 0.0], "done": False}  
+stop = threading.Event()  
+  
+def cb(timestamp, data, logconf):  
+    pos[0], pos[1], pos[2] = (data['stateEstimate.x'],  
+                              data['stateEstimate.y'], data['stateEstimate.z'])  
+  
+def monitor(mc):  
+    last = time.time()  
+    while not stop.is_set():  
+        now = time.time()  
+        dt = now - last  
+        last = now  
+        # move virtual drone toward us (head-on)  
+        for i in range(3):  
+            virt["pos"][i] += virt["vel"][i] * dt  
+  
+        dist = math.dist(pos, virt["pos"])  
+        if dist < 0.3 and not virt["done"]:  
+            virt["done"] = True  
+            print(f"[ALERT] breach at {dist:.2f}m — evading!")  
+            virt["vel"][2] = -0.3          # virtual drone dips down  
+            mc.up(0.3, velocity=0.3)       # physical drone climbs  
+            time.sleep(1.5)  
+            mc.down(0.3, velocity=0.3)  
+        time.sleep(0.1)  
+  
+if __name__ == '__main__':  
+    cflib.crtp.init_drivers()  
+    with SyncCrazyflie(URI) as scf:  
+        lc = LogConfig(name='Position', period_in_ms=50)  
+        for v in ('stateEstimate.x', 'stateEstimate.y', 'stateEstimate.z'):  
+            lc.add_variable(v, 'float')  
+        scf.cf.log.add_config(lc)  
+        lc.data_received_cb.add_callback(cb)  
+        lc.start()  
+        time.sleep(1)   # let a fix arrive  
+  
+        scf.cf.platform.send_arming_request(True)  
+        time.sleep(1)  
+  
+        with MotionCommander(scf, default_height=0.6) as mc:  
+            time.sleep(2)  
+            # intruder spawns 2m ahead on our line, flying at us  
+            virt["pos"] = [pos[0] + 2.0, pos[1], pos[2]]  
+            t = threading.Thread(target=monitor, args=(mc,)); t.start()  
+            mc.forward(1.5, velocity=0.5)  
+            stop.set(); t.join()  
+  
+        lc.stop()
