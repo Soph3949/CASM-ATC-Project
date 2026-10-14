@@ -12,7 +12,7 @@ URI = 'radio://0/80/2M/E7E7E7E702'
 FLIGHT_HEIGHT = 0.3
 FORWARD_SPEED = 0.2      # m/s
 OBSTACLE_DISTANCE = 0.3   # Stop if an object is closer than this
-CLIMB_HEIGHT = 0.3      # Climb by 30 cm
+CLIMB_HEIGHT = 1      # Climb by 1 m to avoid obstacles
 CEILING_CLEARANCE = 0.6  # Require 60 cm above the drone
 FLIGHT_TIME = 10         # Maximum forward-flight time in seconds
 
@@ -65,7 +65,6 @@ def obstacle_avoidance(mc, multiranger):
             time.sleep(0.05)
 
     finally:
-        # Always stop commanded forward motion before exiting.
         mc.stop()
 
 
@@ -77,7 +76,6 @@ if __name__ == '__main__':
             scf.cf.platform.send_arming_request(True)
             time.sleep(1)
 
-            # Requires a compatible Multiranger deck.
             with Multiranger(scf) as multiranger:
                 with MotionCommander(
                     scf, default_height=FLIGHT_HEIGHT
