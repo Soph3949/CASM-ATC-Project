@@ -9,22 +9,23 @@ from cflib.utils.multiranger import Multiranger
 
 URI = 'radio://0/80/2M/E7E7E7E702'
 
-# Conservative diagnostic settings
-FLIGHT_HEIGHT = 0.3
+# Flight settings
+FLIGHT_HEIGHT = 0.2
 FORWARD_SPEED = 0.3
 OBSTACLE_DISTANCE = 0.5
 
-CLIMB_HEIGHT = 0.4
-CROSS_DISTANCE = 0.5
-CEILING_CLEARANCE = 0.3
+# Obstacle crossing settings
+CLIMB_HEIGHT = 0.4    # Climb an additional 30 cm
+CROSS_DISTANCE = 2.0     # Move forward 2 m at the higher altitude
+CEILING_CLEARANCE = 0.3  # Extra clearance above the planned climb
 
 FLIGHT_TIME = 10
 
 logging.basicConfig(level=logging.ERROR)
 
-
 def obstacle_avoidance(mc, multiranger):
     start_time = time.time()
+    obstacle_handled = False
 
     print("Flying forward. Monitoring for obstacles...")
 
@@ -32,54 +33,49 @@ def obstacle_avoidance(mc, multiranger):
         while time.time() - start_time < FLIGHT_TIME:
             front = multiranger.front
 
-            if front is None:
-                # Unknown front distance: stop rather than assume clear.
-                mc.stop()
-                print("Front sensor unavailable. Aborting.")
-                return
-
-            if front < OBSTACLE_DISTANCE:
+            # Detect an obstacle in front of the drone.
+            if (
+                not obstacle_handled
+                and front is not None
+                and front < OBSTACLE_DISTANCE
+            ):
                 print(f"Obstacle detected: {front:.2f} m")
 
-                # Stop forward motion.
+                # Stop before performing the maneuver.
                 mc.stop()
-                time.sleep(0.5)
+                time.sleep(0.3)
 
-                # Check that the overhead distance is valid.
+                # Check overhead clearance.
                 above = multiranger.up
 
                 if (
                     above is None
                     or above < CLIMB_HEIGHT + CEILING_CLEARANCE
                 ):
-                    print("Insufficient or unknown overhead clearance.")
-                    return
+                    print(
+                        "Overhead clearance insufficient or unknown. "
+                        "Aborting the maneuver."
+                    )
+                    break
 
-                print("Climbing slowly...")
-                mc.up(CLIMB_HEIGHT, velocity=0.1)
-                mc.stop()
-                time.sleep(0.5)
+                print("Step 1: Climbing...")
+                mc.up(CLIMB_HEIGHT, velocity=0.2)
 
-                # Recheck clearance after climbing.
-                above = multiranger.up
+                # Give the range sensor time to update.
+                time.sleep(0.3)
 
-                if above is None or above < CEILING_CLEARANCE:
-                    print("Clearance check failed. Aborting.")
-                    return
+                print("Step 2: Flying forward over the obstacle...")
+                mc.forward(1, velocity=FORWARD_SPEED)
 
-                print("Crossing a short distance...")
-                mc.forward(1.5, velocity=0.1)
                 mc.land()
 
-                print("Crossing test complete.")
-                print("Ending maneuver; no further movement commands.")
-                return
+                print("Obstacle crossing sequence completed.")
 
-            # Maintain a slow forward command while searching.
-            mc.start_forward(velocity=FORWARD_SPEED)
+                obstacle_handled = True
+            else:
+                mc.start_forward(velocity=FORWARD_SPEED)
+
             time.sleep(0.1)
-
-        print("Flight time limit reached.")
 
     finally:
         mc.stop()
@@ -100,9 +96,12 @@ if __name__ == '__main__':
                     print("Taking off...")
                     time.sleep(2)
 
-                    obstacle_avoidance(mc, multiranger)
-
-                    print("Landing through MotionCommander context.")
+                    try:
+                        obstacle_avoidance(mc, multiranger)
+                    finally:
+                        print("Landing...")
+                        mc.stop()
+                        mc.land()
 
     except KeyboardInterrupt:
         print("Flight interrupted by user.")
