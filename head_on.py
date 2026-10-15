@@ -1,3 +1,4 @@
+
 import logging
 import time
 
@@ -10,59 +11,72 @@ URI = 'radio://0/80/2M/E7E7E7E702'
 
 # Flight settings
 FLIGHT_HEIGHT = 0.3
-FORWARD_SPEED = 0.2      # m/s
-OBSTACLE_DISTANCE = 0.3   # Stop if an object is closer than this
-CLIMB_HEIGHT = 1      # Climb by 1 m to avoid obstacles
-CEILING_CLEARANCE = 0.6  # Require 60 cm above the drone
-FLIGHT_TIME = 10         # Maximum forward-flight time in seconds
+FORWARD_SPEED = 0.2
+OBSTACLE_DISTANCE = 0.5
+
+# Obstacle crossing settings
+CLIMB_HEIGHT = 0.5       # Climb an additional 60 cm
+CROSS_DISTANCE = 1.5     # Move forward 1 m at the higher altitude
+CEILING_CLEARANCE = 0.3  # Extra clearance above the planned climb
+
+FLIGHT_TIME = 10
 
 logging.basicConfig(level=logging.ERROR)
 
-
 def obstacle_avoidance(mc, multiranger):
     start_time = time.time()
-    flying_forward = False
+    obstacle_handled = False
 
     print("Flying forward. Monitoring for obstacles...")
 
     try:
         while time.time() - start_time < FLIGHT_TIME:
             front = multiranger.front
-            above = multiranger.up
 
-            # A valid front reading indicates an obstacle is nearby.
-            obstacle_detected = (
-                front is not None
+            # Detect an obstacle in front of the drone.
+            if (
+                not obstacle_handled
+                and front is not None
                 and front < OBSTACLE_DISTANCE
-            )
-
-            if obstacle_detected:
+            ):
                 print(f"Obstacle detected: {front:.2f} m")
 
-                # Stop horizontal movement before attempting to climb.
+                # Stop before performing the maneuver.
                 mc.stop()
-                flying_forward = False
                 time.sleep(0.3)
 
-                # Check whether the upward sensor reports enough room.
-                if above is not None and above < CEILING_CLEARANCE:
-                    print("Not enough overhead clearance. Landing.")
+                # Check overhead clearance.
+                above = multiranger.up
+
+                if (
+                    above is None
+                    or above < CLIMB_HEIGHT + CEILING_CLEARANCE
+                ):
+                    print(
+                        "Overhead clearance insufficient or unknown. "
+                        "Aborting the maneuver."
+                    )
                     break
 
-                print("Climbing to avoid obstacle...")
-                mc.up(CLIMB_HEIGHT, velocity=0.15)
+                print("Step 1: Climbing...")
+                mc.up(CLIMB_HEIGHT, velocity=0.2)
+
+                # Give the range sensor time to update.
                 time.sleep(0.3)
 
-                # Resume forward movement after climbing.
-                print("Continuing forward...")
-                mc.start_forward(velocity=FORWARD_SPEED)
-                flying_forward = True
+                print("Step 2: Flying forward over the obstacle...")
+                mc.forward(CROSS_DISTANCE, velocity=FORWARD_SPEED)
 
-            elif not flying_forward:
-                mc.start_forward(velocity=FORWARD_SPEED)
-                flying_forward = True
+                print("Step 3: Descending toward original height...")
+                mc.down(CLIMB_HEIGHT, velocity=0.2)
 
-            time.sleep(0.05)
+                print("Obstacle crossing sequence completed.")
+
+                obstacle_handled = True
+            else:
+                mc.start_forward(velocity=FORWARD_SPEED)
+
+            time.sleep(0.1)
 
     finally:
         mc.stop()
@@ -92,4 +106,3 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         print("Flight interrupted by user.")
-
