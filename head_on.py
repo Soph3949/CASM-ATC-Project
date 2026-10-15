@@ -1,3 +1,4 @@
+
 import logging
 import time
 
@@ -9,96 +10,72 @@ from cflib.utils.multiranger import Multiranger
 URI = 'radio://0/80/2M/E7E7E7E702'
 
 # Flight settings
-FLIGHT_HEIGHT = 0.3
-FORWARD_SPEED = 0.2      # m/s
-OBSTACLE_DISTANCE = 0.3   # Stop if an object is closer than this
-CLIMB_HEIGHT = 1      # Climb by 1 m to avoid obstacles
-CEILING_CLEARANCE = 0.6  # Require 60 cm above the drone
-FLIGHT_TIME = 30         # Maximum flight time in seconds (climbing 1 m takes ~7 s)
-HEIGHT_JUMP = 0.15       # Down-sensor change that means the object starts/ends
-PASS_DISTANCE = 0.2      # Extra distance to fly after the object so the drone is fully past it
-LANDING_SPEED = 0.1      # m/s, slower than the default for a smooth landing
+FLIGHT_HEIGHT = 0.2
+FORWARD_SPEED = 0.3
+OBSTACLE_DISTANCE = 0.5
+
+# Obstacle crossing settings
+CLIMB_HEIGHT = 0.3    # Climb an additional 30 cm
+CROSS_DISTANCE = 2.0     # Move forward 2 m at the higher altitude
+CEILING_CLEARANCE = 0.3  # Extra clearance above the planned climb
+
+FLIGHT_TIME = 10
 
 logging.basicConfig(level=logging.ERROR)
 
-
 def obstacle_avoidance(mc, multiranger):
     start_time = time.time()
-    flying_forward = False
-    climbed = False
-    over_obstacle = False
-    last_below = None
+    obstacle_handled = False
 
     print("Flying forward. Monitoring for obstacles...")
 
     try:
         while time.time() - start_time < FLIGHT_TIME:
             front = multiranger.front
-            above = multiranger.up
-            below = multiranger.down
 
-            # A valid front reading indicates an obstacle is nearby.
-            # Only look for it before climbing; afterwards we are above it.
-            obstacle_detected = (
-                not climbed
+            # Detect an obstacle in front of the drone.
+            if (
+                not obstacle_handled
                 and front is not None
                 and front < OBSTACLE_DISTANCE
-            )
-
-            if obstacle_detected:
+            ):
                 print(f"Obstacle detected: {front:.2f} m")
 
-                # Stop horizontal movement before attempting to climb.
+                # Stop before performing the maneuver.
                 mc.stop()
-                flying_forward = False
                 time.sleep(0.3)
 
-                # Check whether the upward sensor reports enough room.
-                if above is not None and above < CEILING_CLEARANCE:
-                    print("Not enough overhead clearance. Landing.")
+                # Check overhead clearance.
+                above = multiranger.up
+
+                if (
+                    above is None
+                    or above < CLIMB_HEIGHT + CEILING_CLEARANCE
+                ):
+                    print(
+                        "Overhead clearance insufficient or unknown. "
+                        "Aborting the maneuver."
+                    )
                     break
 
-                print("Climbing to avoid obstacle...")
-                mc.up(CLIMB_HEIGHT, velocity=0.15)
+                print("Step 1: Climbing...")
+                mc.up(CLIMB_HEIGHT, velocity=0.2)
+
+                # Give the range sensor time to update.
                 time.sleep(0.3)
-                climbed = True
-                last_below = multiranger.down
 
-                # Resume forward movement after climbing.
-                print("Continuing forward. Watching for the object below...")
+                print("Step 2: Flying forward over the obstacle...")
+                mc.forward(1, velocity=FORWARD_SPEED)
+
+                mc.land()
+
+                print("Obstacle crossing sequence completed.")
+
+                obstacle_handled = True
+            else:
                 mc.start_forward(velocity=FORWARD_SPEED)
-                flying_forward = True
 
-            elif climbed and below is not None and last_below is not None:
-                # The down sensor suddenly gets shorter when the object
-                # is under the drone, and suddenly longer once it is behind.
-                if not over_obstacle and below < last_below - HEIGHT_JUMP:
-                    print(f"Over the object: {below:.2f} m below")
-                    over_obstacle = True
-
-                elif over_obstacle and below > last_below + HEIGHT_JUMP:
-                    print("Object cleared.")
-
-                    # Fly a little further so the back of the drone is past it.
-                    mc.forward(PASS_DISTANCE, velocity=FORWARD_SPEED)
-                    mc.stop()
-                    flying_forward = False
-                    time.sleep(0.5)
-
-                    # Go back down to the original altitude.
-                    print("Returning to original altitude...")
-                    mc.down(CLIMB_HEIGHT, velocity=0.15)
-                    time.sleep(1)
-                    break
-
-            elif not flying_forward:
-                mc.start_forward(velocity=FORWARD_SPEED)
-                flying_forward = True
-
-            if below is not None:
-                last_below = below
-
-            time.sleep(0.05)
+            time.sleep(0.1)
 
     finally:
         mc.stop()
@@ -124,8 +101,7 @@ if __name__ == '__main__':
                     finally:
                         print("Landing...")
                         mc.stop()
-                        time.sleep(1)
-                        mc.land(velocity=LANDING_SPEED)
+                        mc.land()
 
     except KeyboardInterrupt:
         print("Flight interrupted by user.")
