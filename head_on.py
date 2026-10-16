@@ -48,16 +48,6 @@ def obstacle_avoidance(mc, multiranger):
                 # Check overhead clearance.
                 above = multiranger.up
 
-                if (
-                    above is None
-                    or above < CLIMB_HEIGHT + CEILING_CLEARANCE
-                ):
-                    print(
-                        "Overhead clearance insufficient or unknown. "
-                        "Aborting the maneuver."
-                    )
-                    break
-
                 print("Step 1: Climbing...")
                 mc.up(CLIMB_HEIGHT, velocity=0.2)
 
